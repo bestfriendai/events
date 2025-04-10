@@ -21,3 +21,20 @@ export function calculateDistance(
 function toRad(degrees: number): number {
   return degrees * (Math.PI / 180);
 }
+
+/**
+ * Format a distance value for display
+ * @param meters Distance in meters or miles
+ * @param isMeters Whether the distance is in meters (true) or miles (false)
+ * @returns Formatted distance string
+ */
+export function formatDistance(distance: number, isMeters: boolean = true): string {
+  if (isMeters) {
+    // Convert meters to miles
+    const miles = distance / 1609.34;
+    return miles < 10 ? `${miles.toFixed(1)} miles` : `${Math.round(miles)} miles`;
+  } else {
+    // Already in miles
+    return distance < 10 ? `${distance.toFixed(1)} miles` : `${Math.round(distance)} miles`;
+  }
+}

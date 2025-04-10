@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 import { nextui } from "@nextui-org/react";
 import tailwindcssAnimate from "tailwindcss-animate";
+import { tokens } from "./src/styles/tokens";
 
 export default {
   darkMode: ["class"],
@@ -22,11 +23,26 @@ export default {
     },
     extend: {
       colors: {
+        // Keep existing color variables for compatibility with shadcn/ui
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        
+        // Add our token-based colors with different names to avoid conflicts
+        primaryToken: tokens.colors.primary,
+        secondaryToken: tokens.colors.secondary,
+        accentToken: tokens.colors.accent,
+        successToken: { DEFAULT: tokens.colors.success },
+        warningToken: { DEFAULT: tokens.colors.warning },
+        errorToken: { DEFAULT: tokens.colors.error },
+        infoToken: { DEFAULT: tokens.colors.info },
+        bgToken: tokens.colors.background,
+        textToken: tokens.colors.text,
+        borderToken: tokens.colors.border,
+        
+        // Keep existing color objects for compatibility with shadcn/ui
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -35,6 +51,10 @@ export default {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
@@ -42,10 +62,6 @@ export default {
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -57,35 +73,49 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // Merge existing font families with our tokens
+        sans: tokens.typography.fontFamily.sans,
+        mono: tokens.typography.fontFamily.mono,
         heading: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       fontSize: {
-        'xs': '0.75rem',
-        'sm': '0.875rem',
-        'base': '1rem',
-        'lg': '1.125rem',
-        'xl': '1.25rem',
-        '2xl': '1.5rem',
-        '3xl': '1.875rem',
-        '4xl': '2.25rem',
-        '5xl': '3rem',
+        // Use our token-based font sizes
+        ...tokens.typography.fontSize,
+        // Keep larger sizes from existing config
         '6xl': '3.75rem',
         '7xl': '4.5rem',
         '8xl': '6rem',
         '9xl': '8rem',
       },
+      fontWeight: tokens.typography.fontWeight,
+      lineHeight: tokens.typography.lineHeight,
       borderRadius: {
+        // Merge existing border radius with our tokens
+        ...tokens.borderRadius,
         lg: "1rem",
         md: "0.75rem",
         sm: "0.5rem",
       },
       spacing: {
+        // Merge existing spacing with our tokens
+        ...tokens.spacing,
         '18': '4.5rem',
         '22': '5.5rem',
         '26': '6.5rem',
         '30': '7.5rem',
       },
+      boxShadow: tokens.shadows,
+      transitionProperty: {
+        'height': 'height',
+        'spacing': 'margin, padding',
+      },
+      transitionTimingFunction: tokens.transitions.timing,
+      transitionDuration: {
+        'DEFAULT': '150ms',
+        'fast': '100ms',
+        'slow': '300ms',
+      },
+      zIndex: tokens.zIndex,
       keyframes: {
         "accordion-down": {
           from: { height: "0" },

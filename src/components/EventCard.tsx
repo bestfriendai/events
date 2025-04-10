@@ -1,6 +1,7 @@
-import React from 'react';
-import { Calendar, MapPin } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, Clock, MapPin, DollarSign, Star } from 'lucide-react';
 import { Event } from '../types';
+import { formatDistance } from '@/utils/distance';
 
 // Default images for each category
 const DEFAULT_IMAGES = {
@@ -99,6 +100,25 @@ const getEventImage = (event: Event): string => {
   return DEFAULT_IMAGES.default;
 };
 
+// Get category icon
+const getCategoryIcon = (category?: string): string => {
+  if (!category) return '📍';
+  
+  const categoryLower = category.toLowerCase();
+  
+  if (categoryLower.includes('music') || categoryLower.includes('concert')) return '🎵';
+  if (categoryLower.includes('comedy')) return '😄';
+  if (categoryLower.includes('sport')) return '⚽';
+  if (categoryLower.includes('art') || categoryLower.includes('theatre') || categoryLower.includes('theater')) return '🎭';
+  if (categoryLower.includes('food') || categoryLower.includes('dining')) return '🍽️';
+  if (categoryLower.includes('festival')) return '🎪';
+  if (categoryLower.includes('film') || categoryLower.includes('movie')) return '🎬';
+  if (categoryLower.includes('outdoor') || categoryLower.includes('adventure')) return '🌲';
+  if (categoryLower.includes('education') || categoryLower.includes('workshop')) return '📚';
+  
+  return '📍';
+};
+
 interface EventCardProps {
   event: Event;
   onClick: () => void;
@@ -106,61 +126,133 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, onClick, isSelected }: EventCardProps) {
-  // Create a serializable version of the event data
-  const handleClick = () => {
-    // Ensure we're only passing serializable data
-    onClick();
-  };
-
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  
   // Safely access nested properties
   const address = event.location?.address || 'Location TBA';
-  const formattedDate = event.date ? `${event.date}, ${event.time || ''}` : 'Date TBA';
+  const formattedDate = event.date || 'Date TBA';
+  const categoryIcon = getCategoryIcon(event.category);
+  
+  // Format price if available
+  const priceDisplay = event.price !== undefined && event.price !== null
+    ? event.price === 0 
+      ? 'Free'
+      : `$${event.price}`
+    : null;
+    
+  // Get venue details
+  const venueName = event.venue_details?.name || event.venue || '';
+  const venueRating = event.venue_details?.rating;
 
   return (
     <div
-      onClick={handleClick}
-      className={`group bg-zinc-900/50 rounded-xl p-4 cursor-pointer hover:bg-zinc-800 transition-all border ${
-        isSelected ? 'border-blue-500' : 'border-zinc-800/50'
-      }`}
+      onClick={onClick}
+      className={`
+        relative overflow-hidden rounded-xl transition-all duration-300 
+        ${isSelected 
+          ? 'ring-2 ring-primaryToken-500 bg-bgToken-tertiary' 
+          : 'hover:bg-bgToken-secondary'
+        }
+      `}
     >
-      <div className="relative rounded-lg overflow-hidden mb-3">
-        <img
-          src={getEventImage(event)}
-          alt={event.title}
-          className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={(e) => {
-            // If image fails to load, use default image
-            (e.target as HTMLImageElement).src = DEFAULT_IMAGES.default;
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-      </div>
-
-      <div className="flex gap-2 mb-2">
-        <span className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full">
-          {event.category}
-        </span>
-        {event.subcategory !== 'Various' && (
-          <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full">
-            {event.subcategory}
-          </span>
-        )}
-      </div>
-
-      <h3 className="font-medium text-white mb-2 group-hover:text-blue-400 transition-colors">
-        {event.title}
-      </h3>
-
-      <div className="space-y-2 text-sm text-zinc-400">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4" />
-          <span>{formattedDate}</span>
+      <div className="flex flex-col md:flex-row gap-4 p-4">
+        {/* Image */}
+        <div className="relative w-full md:w-32 h-32 rounded-lg overflow-hidden flex-shrink-0">
+          {!imageLoaded && !imageError && (
+            <div className="absolute inset-0 bg-bgToken-tertiary animate-pulse" />
+          )}
+          
+          <img
+            src={imageError ? DEFAULT_IMAGES.default : getEventImage(event)}
+            alt={event.title}
+            className={`
+              w-full h-full object-cover transition-opacity duration-300
+              ${imageLoaded ? 'opacity-100' : 'opacity-0'}
+            `}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => {
+              setImageError(true);
+              setImageLoaded(true);
+            }}
+          />
+          
+          <div className="absolute top-2 left-2 bg-bgToken-primary/80 backdrop-blur-sm 
+                         text-textToken-primary px-2 py-1 rounded-md text-xs font-medium">
+            {categoryIcon} {event.subcategory || event.category}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <MapPin className="w-4 h-4" />
-          <span className="line-clamp-1">{address}</span>
+        
+        {/* Content */}
+        <div className="flex-1 flex flex-col">
+          <h3 className="text-lg font-semibold text-textToken-primary line-clamp-2">{event.title}</h3>
+          
+          <div className="mt-2 space-y-1.5">
+            {/* Date and Time */}
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="w-4 h-4 text-primaryToken-400" />
+              <span className="text-textToken-secondary">{formattedDate}</span>
+              {event.time && (
+                <>
+                  <span className="text-textToken-tertiary">•</span>
+                  <Clock className="w-4 h-4 text-primaryToken-400" />
+                  <span className="text-textToken-secondary">{event.time}</span>
+                </>
+              )}
+            </div>
+            
+            {/* Location */}
+            <div className="flex items-start gap-2 text-sm">
+              <MapPin className="w-4 h-4 text-errorToken mt-0.5" />
+              <div>
+                <div className="text-textToken-secondary">{venueName}</div>
+                <div className="text-textToken-tertiary text-xs line-clamp-1">
+                  {address}
+                </div>
+              </div>
+            </div>
+            
+            {/* Price and Rating */}
+            <div className="flex items-center gap-4 text-sm">
+              {priceDisplay && (
+                <div className="flex items-center gap-1">
+                  <DollarSign className="w-4 h-4 text-successToken" />
+                  <span className="text-textToken-secondary">{priceDisplay}</span>
+                </div>
+              )}
+              
+              {venueRating && (
+                <div className="flex items-center gap-1">
+                  <Star className="w-4 h-4 text-warningToken" />
+                  <span className="text-textToken-secondary">{venueRating}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Distance */}
+          {event.distance && (
+            <div className="mt-auto pt-2">
+              <span className="text-xs bg-primaryToken-500/10 text-primaryToken-400 px-2 py-1 rounded-md">
+                {formatDistance(event.distance, event.distance > 1000)} away
+              </span>
+            </div>
+          )}
         </div>
       </div>
+      
+      {/* Status indicator */}
+      {event.status && (
+        <div className={`
+          absolute top-0 right-0 px-2 py-1 text-xs font-medium
+          ${event.status === 'open' 
+            ? 'bg-successToken/20 text-successToken' 
+            : 'bg-errorToken/20 text-errorToken'
+          }
+        `}>
+          {event.status === 'open' ? 'Open' : 'Closed'}
+        </div>
+      )}
     </div>
   );
 }
